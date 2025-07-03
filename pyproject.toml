@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "fastapi-django"
+version = "0.1.0"
+description = ""
+authors = ["albertalexandrov <albert-ugatu@list.ru>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+fastapi = "^0.115.14"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,1 @@
+FASTAPI_XYZ_SETTINGS_MODULE = "fastapi_django.settings"
