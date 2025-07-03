@@ -3,7 +3,7 @@ import os
 
 from fastapi_django.conf import global_settings
 
-ENVIRONMENT_VARIABLE = "FASTAPI_XYZ_SETTINGS_MODULE"
+ENVIRONMENT_VARIABLE = "FASTAPI_DJANGO_SETTINGS_MODULE"
 empty = object()
 
 
@@ -74,7 +74,6 @@ class Settings:
 
         # store the settings module in case someone later cares
         self.SETTINGS_MODULE = settings_module
-
         mod = importlib.import_module(self.SETTINGS_MODULE)
 
         tuple_settings = (
