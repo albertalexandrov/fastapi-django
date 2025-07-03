@@ -10,3 +10,5 @@ MIDDLEWARES = ["default.middleware.example.Middleware"]
 PROMETHEUS_ENABLED = False
 PROMETHEUS_SHOULD_GZIP = True
 PROMETHEUS_NAME = "prometheus_metrics"
+
+TRUSTED_HOST_MIDDLEWARE_ALLOWED_HOSTS = ["*"]

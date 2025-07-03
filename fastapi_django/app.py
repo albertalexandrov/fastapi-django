@@ -3,6 +3,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, FastAPI
 from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.staticfiles import StaticFiles
 
 from .conf import settings
@@ -30,13 +31,27 @@ def setup_prometheus(app: FastAPI) -> None:
             name=settings.PROMETHEUS_NAME,
             tags=["Метрики"]
         )
-        # TODO: остальные настройки в settings
+        # TODO:
+        #  остальные настройки в settings
+        #  создать функцию типа get_prefixed_url
 
 
 def include_routers(app: FastAPI) -> None:
     router = APIRouter()
     include_docs_router(app, router)
     app.include_router(router)
+
+
+def setup_middlewares(app: FastAPI) -> None:
+    for middleware in settings.MIDDLEWARES:
+        print("===> middleware", middleware)
+        app.add_middleware(middleware)
+    # TODO: продумать:
+    #  преднастроенные миддлварь, которые задаются в строковом формате и имеют настройки ИЛИ не имеют параметров инициализации
+    #  callabe миддвари, с преднастроенными при помощи partial параметрами напр:
+    #   MIDDLEWARES = [
+    #     partial(TrustedHostMiddleware, allowed_hosts=["localhost", "*.example.com"])
+    #   ]
 
 
 application = FastAPI(
@@ -52,3 +67,4 @@ application = FastAPI(
 application.include_router = partial(application.include_router, prefix=settings.API_PREFIX)
 include_routers(application)
 setup_prometheus(application)
+setup_middlewares(application)
