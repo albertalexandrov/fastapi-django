@@ -5,6 +5,4 @@ API_DOCS_ENABLED = False
 API_VERSION = "API version not specified"
 API_DEBUG = False
 API_PREFIX = None
-MIDDLEWARES = [
-    "default.middleware.example.Middleware"
-]
+MIDDLEWARES = ["default.middleware.example.Middleware"]

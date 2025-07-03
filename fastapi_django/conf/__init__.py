@@ -1,8 +1,8 @@
 import importlib
 import os
-import warnings
 
 from fastapi_django.conf import global_settings
+
 ENVIRONMENT_VARIABLE = "FASTAPI_XYZ_SETTINGS_MODULE"
 empty = object()
 
@@ -14,14 +14,13 @@ class LazySettings:
         self._wrapped = empty
 
     def _setup(self, name=None):
-        """
-        Load the settings module pointed to by the environment variable. This
-        is used the first time settings are needed, if the user hasn't
+        """Load the settings module pointed to by the environment variable.
+
+        This is used the first time settings are needed, if the user hasn't
         configured settings manually.
         """
         settings_module = os.environ.get(ENVIRONMENT_VARIABLE)
         if not settings_module:
-            desc = ("setting %s" % name) if name else "settings"
             raise ValueError("не сконфигурировано")
 
         self._wrapped = Settings(settings_module)
@@ -44,8 +43,9 @@ class LazySettings:
         return val
 
     def __setattr__(self, name, value):
-        """
-        Set the value of setting. Clear all cached values if _wrapped changes
+        """Set the value of setting.
+
+        Clear all cached values if _wrapped changes
         (@override_settings does this) or clear single values when set.
         """
         if name == "_wrapped":
@@ -89,12 +89,8 @@ class Settings:
             if setting.isupper():
                 setting_value = getattr(mod, setting)
 
-                if setting in tuple_settings and not isinstance(
-                    setting_value, (list, tuple)
-                ):
-                    raise ValueError(
-                        "The %s setting must be a list or a tuple." % setting
-                    )
+                if setting in tuple_settings and not isinstance(setting_value, list | tuple):
+                    raise ValueError(f"The {setting} setting must be a list or a tuple.")
                 setattr(self, setting, setting_value)
                 self._explicit_settings.add(setting)
 
@@ -102,10 +98,7 @@ class Settings:
         return setting in self._explicit_settings
 
     def __repr__(self):
-        return '<%(cls)s "%(settings_module)s">' % {
-            "cls": self.__class__.__name__,
-            "settings_module": self.SETTINGS_MODULE,
-        }
+        return f'<{self.__class__.__name__} "{self.SETTINGS_MODULE}">'
 
 
 settings = LazySettings()

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from fastapi import FastAPI, APIRouter
+from fastapi import APIRouter, FastAPI
 from starlette.staticfiles import StaticFiles
 
 from .conf import settings
