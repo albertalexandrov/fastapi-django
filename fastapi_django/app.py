@@ -1,13 +1,15 @@
 from functools import partial
 from pathlib import Path
 
+import pkg_resources
 from fastapi import APIRouter, FastAPI
-from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 from starlette.staticfiles import StaticFiles
 
 from .conf import settings
 from .docs.views import router as docs_router
+
+installed_packages = pkg_resources.working_set
+installed_packages_list = [f"{i.key}" for i in installed_packages]
 
 APP_ROOT = Path(__file__).parent
 
@@ -20,16 +22,14 @@ def include_docs_router(app: FastAPI, router: APIRouter) -> None:
 
 
 def setup_prometheus(app: FastAPI) -> None:
-    # TODO: проверить, что prometheus-fastapi-instrumentator установлен
     print("===> settings.PROMETHEUS_ENABLED", settings.PROMETHEUS_ENABLED)
-    if settings.PROMETHEUS_ENABLED:
+    if settings.PROMETHEUS_ENABLED and "prometheus-fastapi-instrumentator" in installed_packages_list:
+        from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
+
         instrumentator = PrometheusFastApiInstrumentator(should_group_status_codes=False)
         instrumentator = instrumentator.instrument(app)
         instrumentator.expose(
-            app,
-            should_gzip=settings.PROMETHEUS_SHOULD_GZIP,
-            name=settings.PROMETHEUS_NAME,
-            tags=["Метрики"]
+            app, should_gzip=settings.PROMETHEUS_SHOULD_GZIP, name=settings.PROMETHEUS_NAME, tags=["Метрики"]
         )
         # TODO:
         #  остальные настройки в settings
@@ -46,8 +46,9 @@ def setup_middlewares(app: FastAPI) -> None:
     for middleware in settings.MIDDLEWARES:
         print("===> middleware", middleware)
         app.add_middleware(middleware)
-    # TODO: продумать:
-    #  преднастроенные миддлварь, которые задаются в строковом формате и имеют настройки ИЛИ не имеют параметров инициализации
+    #  TODO: продумать:
+    #  преднастроенные миддлварь, которые задаются в строковом формате и
+    #  имеют настройки ИЛИ не имеют параметров инициализации
     #  callabe миддвари, с преднастроенными при помощи partial параметрами напр:
     #   MIDDLEWARES = [
     #     partial(TrustedHostMiddleware, allowed_hosts=["localhost", "*.example.com"])
@@ -61,10 +62,10 @@ application = FastAPI(
     version=settings.API_VERSION,
     docs_url=None,
     redoc_url=None,
-    openapi_url=f"{settings.API_PREFIX}/docs/openapi.json"
+    openapi_url=f"{settings.API_PREFIX}/docs/openapi.json",
 )
 # TODO: настроить урлы
-application.include_router = partial(application.include_router, prefix=settings.API_PREFIX)
+application.include_router = partial(application.include_router, prefix=settings.API_PREFIX)  # type: ignore
 include_routers(application)
 setup_prometheus(application)
 setup_middlewares(application)
