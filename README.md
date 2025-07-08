@@ -9,6 +9,13 @@
 1. генерация шаблона проекта как в django (также генерируется файл manage.py, в котором дополняются переменные окружения 
 и который является входной точкой в приложение)
 2. прикинуть, какие еще консольные команды могут пригодиться (напр., миграции)
+3. репозитории
+4. http-исключения
+5. разработать формат ошибок (ошибки для тоста, ошибки валидации)
+5. интегрировать https://github.com/albertalexandrov/django-like-repositories
+6. работа с БД не только в рамках апишки, но в рамках напр. асинхронных задач
+7. расширяемые сервисы для наиболее частых операций типа получить по id, обновить, получить список и тд
+8. инжектить сессию в мддлвари наверно не вариант, тк может быть несколько бд
 
 ## Создание приложения
 
@@ -55,6 +62,76 @@ python manage.py runserver
 Это запустит экземпляр указанного в UVICORN_APP приложения при помощи uvicorn. 
 
 ## Исследование имеющихся решений
+
+[https://github.com/mjhea0/awesome-fastapi](https://github.com/mjhea0/awesome-fastapi)
+
+### fastapi-sqla
+
+Движки, сессии конфигурируются библиотекой. Параметры через энвы, для наименования которых необходимо придерживаться 
+некоторых правил. 
+
+Сессия создается в миддлварях и [записывается в fastapi.Request.state](https://github.com/dialoguemd/fastapi-sqla/blob/master/fastapi_sqla/async_sqla.py#L137). 
+Затем эту сессию депенденси AsyncSessionDependency возвращает.
+
+Сессия не хранится в contextvars.
+
+Сессия конфигурируется по ключу и готова к использованию.
+
+Пример использования в апишке:
+
+```python
+from typing import Annotated
+
+from fastapi import APIRouter, Depends
+from fastapi_sqla import (
+    AsyncSessionDependency,
+    SessionDependency,
+    SqlaAsyncSession,
+    SqlaSession,
+)
+
+router = APIRouter()
+
+# Preferred
+
+ReadOnlySession = Annotated[SqlaSession, Depends(SessionDependency(key="read_only"))]
+AsyncReadOnlySession = Annotated[SqlaAsyncSession, Depends(AsyncSessionDependency(key="read_only"))]
+
+
+@router.get("/example")
+def example(session: ReadOnlySession):
+    return session.execute("SELECT now()").scalar()
+
+
+@router.get("/async_example")
+async def async_example(session: AsyncReadOnlySession):
+    return await session.scalar("SELECT now()")
+```
+
+Использование вне контекста веб приложения:
+
+```python
+from fastapi import APIRouter, BackgroundTasks
+from fastapi_sqla import open_async_session, open_session
+
+router = APIRouter()
+
+
+@router.get("/example")
+def example(bg: BackgroundTasks):
+    bg.add_task(run_bg)
+    bg.add_task(run_async_bg)
+
+
+def run_bg():
+    with open_session() as session:
+        session.execute("SELECT now()").scalar()
+```
+
+Идеи/мысли:
+
+1. можно сделать в библиотеке депенденси DefaultSession, которая будет возвращать сессию из default движка
+
 
 ### repository-sqlalchemy
 
@@ -164,3 +241,6 @@ def get_users():
 Нет транзакций.
 
 Паттерн active record.
+
+Не поддерживается.
+
