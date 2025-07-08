@@ -5,8 +5,8 @@ import pkg_resources
 from fastapi import APIRouter, FastAPI
 from starlette.staticfiles import StaticFiles
 
-from .conf import settings
-from .docs.views import router as docs_router
+from fastapi_django.conf import settings
+from fastapi_django.docs.views import router as docs_router
 
 installed_packages = pkg_resources.working_set
 installed_packages_list = [f"{i.key}" for i in installed_packages]
@@ -55,17 +55,19 @@ def setup_middlewares(app: FastAPI) -> None:
     #   ]
 
 
-application = FastAPI(
-    title=settings.API_TITLE,
-    summary=settings.API_SUMMARY,
-    description=settings.API_DESCRIPTION,
-    version=settings.API_VERSION,
-    docs_url=None,
-    redoc_url=None,
-    openapi_url=f"{settings.API_PREFIX}/docs/openapi.json",
-)
-# TODO: настроить урлы
-application.include_router = partial(application.include_router, prefix=settings.API_PREFIX)  # type: ignore
-include_routers(application)
-setup_prometheus(application)
-setup_middlewares(application)
+def get_default_app() -> FastAPI:
+    app = FastAPI(
+        title=settings.API_TITLE,
+        summary=settings.API_SUMMARY,
+        description=settings.API_DESCRIPTION,
+        version=settings.API_VERSION,
+        docs_url=None,
+        redoc_url=None,
+        openapi_url=f"{settings.API_PREFIX}/docs/openapi.json",
+    )
+    # TODO: настроить урлы
+    app.include_router = partial(app.include_router, prefix=settings.API_PREFIX)  # type: ignore
+    include_routers(app)
+    setup_prometheus(app)
+    setup_middlewares(app)
+    return app

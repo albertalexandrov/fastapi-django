@@ -2,7 +2,7 @@ from fastapi import APIRouter, Request
 from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html, get_swagger_ui_oauth2_redirect_html
 from fastapi.responses import HTMLResponse
 
-from ..conf import settings
+from fastapi_django.conf import settings
 
 router = APIRouter()
 

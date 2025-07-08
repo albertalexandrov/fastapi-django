@@ -4,7 +4,59 @@
 
 В одну БД (мастер) пишется, в другую синхронизируется и из нее читается.
 
-## repository-sqlalchemy
+## TODO
+
+1. генерация шаблона проекта как в django (также генерируется файл manage.py, в котором дополняются переменные окружения 
+и который является входной точкой в приложение)
+2. прикинуть, какие еще консольные команды могут пригодиться (напр., миграции)
+
+## Создание приложения
+
+Библиотека предоставляет функцию `fastapi_django.app.get_default_app()`, которая создает экземпляр приложения FastAPI 
+с параметрами, указанными в настройках в settings.py:
+
+```python
+from fastapi_django.app import get_default_app
+
+# создается приложение с указанными или дефолтными настройками
+app = get_default_app()
+```
+
+Далее происходит донастройка экземпляра приложения, напр., включение урлов приложения:
+
+```python
+app.include_router(test_router)
+```
+
+## Запуск приложения
+
+Приложение запускается при помощи Uvicorn, который настраивается переменными окружения:
+
+- UVICORN_APP
+- UVICORN_WORKERS
+- UVICORN_HOST
+- UVICORN_PORT
+- UVICORN_RELOAD
+
+TODO: добавить другие настройки для функции uvicorn.run.
+
+Определите настройки, указанные выше. В качестве UVICORN_APP пропишите путь до экземпляра приложения FastAPI, напр.:
+
+```python
+UVICORN_APP = "web.app:app"
+```
+
+Для запуска приложения используйте консольную команду `runserver`:
+
+```shell
+python manage.py runserver
+```
+
+Это запустит экземпляр указанного в UVICORN_APP приложения при помощи uvicorn. 
+
+## Исследование имеющихся решений
+
+### repository-sqlalchemy
 
 [https://github.com/ryan-zheng-teki/repository-sqlalchemy](https://github.com/ryan-zheng-teki/repository-sqlalchemy)
 

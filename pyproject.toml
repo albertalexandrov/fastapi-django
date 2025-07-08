@@ -7,7 +7,7 @@ check_untyped_defs = true
 
 [tool.poetry]
 name = "fastapi-django"
-version = "0.2.9"
+version = "0.2.33"
 description = ""
 authors = ["albertalexandrov <albert-ugatu@list.ru>"]
 packages = [{include = "fastapi_django"}]
@@ -30,7 +30,10 @@ classifiers = [
 python = "^3.11"
 fastapi = ">=0.115.14,<1.0"
 prometheus-fastapi-instrumentator = "^7.1.0"
+uvicorn = "^0.35.0"
 
+[tool.poetry.scripts]
+fastapi-django = "fastapi_django.management:cli"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.9"
