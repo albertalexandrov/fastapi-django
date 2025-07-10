@@ -14,7 +14,22 @@ PROMETHEUS_NAME = "prometheus_metrics"
 
 TRUSTED_HOST_MIDDLEWARE_ALLOWED_HOSTS = ["*"]
 
-# DATABASES = {}
+DATABASE: dict = {}
+# пример:
+# DATABASE: dict = {
+#     "DRIVERNAME": "postgresql+asyncpg",
+#     "USERNAME": "username",
+#     "PASSWORD": "password",
+#     "HOST": "localhost",
+#     "PORT": 5432,
+#     "DATABASE": "database",
+#     "OPTIONS": {
+#         "connect_args": {"timeout": 30},
+#         "echo": True,
+#         "pool_recycle": 3600,
+#         # другие параметры, которые будут переданы как kw в функцию create_async_engine()
+#     }
+# }
 
 # UVICORN_APP определяется непосредственно в настройках приложения,
 # тк библиотека предоставляет только функцию get_default_app, которая создает экзмепляр приложения

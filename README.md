@@ -1,4 +1,23 @@
-# Работа с базами данных
+# Fastapi-Django
+
+Приложение, разрабатываемое при помощи это библиотеки: [https://github.com/albertalexandrov/fastapi-django-example](https://github.com/albertalexandrov/fastapi-django-example)
+
+Вспомогательная библиотека для разработки приложений на FastAPI.
+
+Реализует функционал для наиболее распространных ситуаций (создание экзмепляра приложения FastAPI по заданным настройкам, 
+работа с БД, фильтрация, пагинация, авторизация, аутентификация).
+
+- [Названия библиотеки](#названия-библиотеки)
+- [TODO](#todo)
+- [Создание приложения](#создание-приложения)
+- [Запуск приложения](#запуск-приложения)
+- [Работа с БД](#работа-с-бд)
+  - [Сессии SQLAlchemy](#сессии-sqlalchemy)
+  - [Миграции](#миграции)
+- [Исследование имеющихся решений](#исследование-имеющихся-решений)
+  - [fastapi-sqla](#fastapi-sqla)
+  - [repository-sqlalchemy](#repository-sqlalchemy)
+  - [FastAPI-SQLAlchemy](#fastapi-sqlalchemy)
 
 ## Названия библиотеки
 
@@ -74,6 +93,54 @@ python manage.py runserver
 ```
 
 Это запустит экземпляр указанного в UVICORN_APP приложения при помощи uvicorn. 
+
+## Работа с БД
+
+### Сессии SQLAlchemy
+
+Работа с базами данных происходит через слой репозиториев. Для этого разработан [базовый класс репозитория BaseRepository](fastapi_django/db/repositories/base.py#L13), 
+который предоставляет возможность работать с данными в стиле Django ORM:
+
+```python
+from fastapi_django.db.repositories.base import BaseRepository
+from fastapi_django.db.sessions import contextified_autocommit_session
+
+
+class UsersRepository(BaseRepository):
+    model_cls = User
+
+
+async with contextified_autocommit_session():
+    repository = UsersRepository()
+    users = await repository.objects.filter(name="Иван").all()
+```
+
+Обратите внимание, что сессия SQLAlchemy не передается при инициализации репозитория. Вместо этого она инициализируется 
+контекстным менеджером contextified_autocommit_session() и помещается в ContextVars. Репозитории (все в пределах действия 
+контекстного менеджера) затем берут инициализированную сессию оттуда. contextified_autocommit_session() также управляет 
+жизненным циклом сессии.
+
+Настройки базы данных задаются в settings(.py) в DATABASE. Пример:
+
+```python
+DATABASE = {
+    "DRIVERNAME": "postgresql+asyncpg",
+    "DATABASE": "fastapi-django",
+    "USERNAME": "postgres",
+    "PASSWORD": "postgres",
+    "HOST": "127.0.0.1",
+    "PORT": "5433",
+    "OPTIONS": {
+        "echo": True
+    },
+}
+```
+
+где OPTIONS - необязательные аргументы, которые будут переданы как kwargs в функцию create_async_engine().
+
+### Миграции
+
+Работа с миграциями остается привычной - через консольную команду alembic.
 
 ## Исследование имеющихся решений
 

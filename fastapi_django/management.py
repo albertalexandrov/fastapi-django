@@ -5,7 +5,7 @@ import uvicorn
 from fastapi_django.conf import settings
 
 
-def cli(argv=None):
+def cli(argv=None) -> None:
     argv = argv or sys.argv[:]
     argv = argv[1:]
     command = argv[0]
@@ -18,5 +18,10 @@ def cli(argv=None):
             port=settings.UVICORN_PORT,
             reload=settings.UVICORN_RELOAD,
         )
+    elif command == "makemigrations":
+        # TODO:
+        #  предусмотреть возможность ручного использования alembic на случай,
+        #  если не хватает возможностей, предоставляемых библиотекой
+        pass
     else:
         print("Вас приветствует fastapi_django!")

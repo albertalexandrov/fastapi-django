@@ -19,7 +19,7 @@ class LazySettings:
         This is used the first time settings are needed, if the user hasn't
         configured settings manually.
         """
-        settings_module = os.environ.get(ENVIRONMENT_VARIABLE)
+        settings_module = os.environ.get(ENVIRONMENT_VARIABLE, "settings")
         if not settings_module:
             raise ValueError("не сконфигурировано")
 
