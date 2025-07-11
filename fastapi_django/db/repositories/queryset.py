@@ -1,5 +1,5 @@
 import logging
-from typing import Self, Any, Type
+from typing import Any, Self
 
 from sqlalchemy import Result, Row
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi_django.db.repositories.builder import QueryBuilder
 from fastapi_django.db.repositories.constants import LOOKUP_SEP
 from fastapi_django.db.types import Model
-from fastapi_django.db.utils import validate_has_columns, get_column
+from fastapi_django.db.utils import get_column, validate_has_columns
 
 logger = logging.getLogger("repositories")
 
@@ -17,7 +17,7 @@ def iterate_scalars(result: Result) -> list[Model]:
 
 
 def iterate_values_list(result: Result) -> list[tuple]:
-    return list(tuple(item) for item in result.tuples().all())
+    return [tuple(item) for item in result.tuples().all()]
 
 
 def iterate_named_values_list(result: Result) -> list[Row]:
@@ -25,9 +25,9 @@ def iterate_named_values_list(result: Result) -> list[Row]:
 
 
 class QuerySet:
-    """
-    Данный класс принимает параметры запроса при помощи промежуточныех методов и транслирует
-    их в QueryBuilder, а также выполняет запросы в БД
+    """Данный класс принимает параметры запроса.
+
+    При помощи промежуточныех методов и транслирует их в QueryBuilder, а также выполняет запросы в БД
 
     - ПРОМЕЖУТОЧНЫЕ И ТЕРМИНАЛЬНЫЕ МЕТОДЫ
 
@@ -79,7 +79,8 @@ class QuerySet:
 
     Результат вычисления QuerySet не кэшируется.
     """
-    def __init__(self, model: Type[Model], session: AsyncSession):
+
+    def __init__(self, model: type[Model], session: AsyncSession):
         self._model_cls = model
         self._session = session
         self._query_builder = QueryBuilder(self._model_cls)
@@ -168,9 +169,7 @@ class QuerySet:
         clone = self._clone()
         clone._query_builder.values_list(*args)
         clone._iterate_result_func = (
-            iterate_named_values_list
-            if named
-            else iterate_scalars if flat else iterate_values_list
+            iterate_named_values_list if named else iterate_scalars if flat else iterate_values_list
         )
         return clone
 
@@ -229,7 +228,7 @@ class QuerySet:
         if id_list is not None:
             if not id_list:
                 return {}
-            filter_key = "{}__in".format(field_name)
+            filter_key = f"{field_name}__in"
             id_list = tuple(id_list)
             filters[filter_key] = id_list
         objs = await self.filter(**filters)
@@ -274,12 +273,11 @@ class QuerySet:
 
     def __getitem__(self, k: int | slice) -> Self:
         self._validate_sliced()
-        if not isinstance(k, (int, slice)):
-            raise TypeError(
-                "Индекс должен быть целыми числом или объектом slice, а не %s."
-                % type(k).__name__
-            )
-        if (isinstance(k, int) and k < 0) or (isinstance(k, slice) and ((k.start is not None and k.start < 0) or (k.stop is not None and k.stop < 0))):
+        if not isinstance(k, int | slice):
+            raise TypeError(f"Индекс должен быть целыми числом или объектом slice, а не {type(k).__name__}.")
+        if (isinstance(k, int) and k < 0) or (
+            isinstance(k, slice) and ((k.start is not None and k.start < 0) or (k.stop is not None and k.stop < 0))
+        ):
             raise ValueError("Отрицательные индексы не поддерживаются")
         if isinstance(k, slice):
             if k.step is not None:
@@ -300,15 +298,14 @@ class QuerySet:
             elif k.start is not None and k.stop is None:
                 limit, offset = None, k.start
             else:
-                limit, offset =  k.stop - k.start, k.start
+                limit, offset = k.stop - k.start, k.start
             clone._query_builder.limit(limit)
             clone._query_builder.offset(offset)
         self._sliced = True
         return clone
 
     def _validate_sliced(self) -> None:
-        """
-        Принимаем, что если был взят срез, то после невозможно менять QuerySet
+        """Принимаем, что если был взят срез, то после невозможно менять QuerySet.
 
         Внятной мотивации для этого нет.  Просто кажется, что такая, например,
         цепочка вызовов методов выглядит более чем странной:

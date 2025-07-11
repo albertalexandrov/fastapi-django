@@ -1,49 +1,46 @@
 import logging
-from typing import Any, Type, Self
+from typing import Any, Self
 
-from sqlalchemy import Select, select, func, delete, Delete, update, Update
-from sqlalchemy.orm import contains_eager, aliased
+from sqlalchemy import Delete, Select, Update, delete, func, select, update
+from sqlalchemy.orm import aliased, contains_eager
 from sqlalchemy.sql.operators import eq
 
 from fastapi_django.db.repositories.constants import LOOKUP_SEP
 from fastapi_django.db.repositories.lookups import lookups
 from fastapi_django.db.types import Model
-from fastapi_django.db.utils import get_column, get_pk, get_relationships, get_columns, get_annotations
+from fastapi_django.db.utils import get_annotations, get_column, get_columns, get_pk, get_relationships
 
 logger = logging.getLogger(__name__)
 
 
 class InvalidFilterFieldError(Exception):
-
     def __init__(self, filter_field: str):
         error = f"Некорректное поле для фильтрации - {filter_field}"
         super().__init__(error)
 
 
 class InvalidOrderByFieldError(Exception):
-
     def __init__(self, ordering_field: str):
         error = f"Некорректное поле для сортировки - {ordering_field}"
         super().__init__(error)
 
 
 class InvalidOptionFieldError(Exception):
-
     def __init__(self, option_field: str):
         error = f"Некорректное поле для options - {option_field}"
         super().__init__(error)
 
 
 class InvalidJoinFieldError(Exception):
-
     def __init__(self, join_field: str):
         error = f"Некорректное поле для join - {join_field}"
         super().__init__(error)
 
 
 class QueryBuilder:
-    """
-    Обертка над запросом SQLAlchemy.  Хранит параметры запроса.  Предоставляет методы для
+    """Обертка над запросом SQLAlchemy.
+
+    Хранит параметры запроса.  Предоставляет методы для
     создания конечных методов
 
     Собирает параметры запроса и в конце генерирует запрос
@@ -134,7 +131,7 @@ class QueryBuilder:
 
     """
 
-    def __init__(self, model_cls: Type[Model]):
+    def __init__(self, model_cls: type[Model]):
         self._model_cls = model_cls
         self._where: dict = {}
         self._order_by: dict = {}
@@ -226,9 +223,7 @@ class QueryBuilder:
                     raise InvalidOrderByFieldError(ordering_field)
             if column_name is None:
                 raise InvalidOrderByFieldError(ordering_field)
-            order_by[column_name] = {
-                "direction": "desc" if ordering_field.startswith("-") else "asc"
-            }
+            order_by[column_name] = {"direction": "desc" if ordering_field.startswith("-") else "asc"}
 
     def options(self, *args: str) -> None:
         for option_field in args:
@@ -239,7 +234,7 @@ class QueryBuilder:
                 if attr in relationships:
                     model_cls = getattr(model_cls, attr).property.mapper.class_
                     joins = joins.setdefault("children", {}).setdefault(attr, {})
-                    joins['model_cls'] = model_cls
+                    joins["model_cls"] = model_cls
                     relationships = get_relationships(model_cls)
                 else:
                     raise InvalidOptionFieldError(option_field)
@@ -277,7 +272,7 @@ class QueryBuilder:
                 if attr in relationships:
                     model_cls = getattr(model_cls, attr).property.mapper.class_
                     joins = joins.setdefault("children", {}).setdefault(attr, {})
-                    joins['model_cls'] = model_cls
+                    joins["model_cls"] = model_cls
                     relationships = get_relationships(model_cls)
                 else:
                     raise InvalidJoinFieldError(join_field)
@@ -300,10 +295,7 @@ class QueryBuilder:
         if self._options:
             raise ValueError("Удалите options")
         pk = get_pk(self._model_cls)
-        stmt = (
-            select(func.count(func.distinct(pk)))
-            .select_from(self._model_cls)
-        )
+        stmt = select(func.count(func.distinct(pk))).select_from(self._model_cls)
         stmt = self._apply_joins(stmt)
         stmt = self._apply_where(stmt)
         return stmt
@@ -343,8 +335,7 @@ class QueryBuilder:
         return stmt
 
     def build_select_stmt(self) -> Select:
-        """
-        Возвращает запрос на выборку
+        """Возвращает запрос на выборку.
 
         Лимитированные запросы с options приходится составлять при помощи подзапроса, чтобы
         гарантировать правильность применений OFFSET и LIMIT, так как связные модели join-ятся
@@ -424,17 +415,17 @@ class QueryBuilder:
     def _apply_where(self, stmt, model_cls=None) -> Select:
         model_cls = model_cls or self._model_cls
         for attr, value in self._where.items():
-            op = value['op']
+            op = value["op"]
             column = getattr(model_cls, attr)
-            stmt = stmt.where(op(column, value['value']))
+            stmt = stmt.where(op(column, value["value"]))
         return stmt
 
     def _apply_order_by(self, stmt: Select, model_cls=None):
         model_cls = model_cls or self._model_cls
         for attr, value in self._order_by.items():
-            direction = value['direction']
+            direction = value["direction"]
             column = getattr(model_cls, attr)  # напр., aliased(Section).name или Section.name
-            column = column.asc() if direction == 'asc' else column.desc()
+            column = column.asc() if direction == "asc" else column.desc()
             stmt = stmt.order_by(column)
         return stmt
 
@@ -444,9 +435,10 @@ class QueryBuilder:
         apply_where: bool = True,
         apply_order_by: bool = True,
         apply_options: bool = True,
-        parent_model_cls=None
+        parent_model_cls=None,
     ) -> Select:
-        """
+        """Метод для работы с join-ами.
+
         как сейчас:
 
         {
@@ -516,7 +508,7 @@ class QueryBuilder:
         for attr, value in joins.get("children", {}).items():
             target = aliased(value["model_cls"])
             onclause = getattr(parent_model_cls, attr)
-            attr_root = f"{root}__{attr}".strip("__")
+            attr_root = f"{root}{LOOKUP_SEP}{attr}".removesuffix(LOOKUP_SEP).removeprefix(LOOKUP_SEP)
             tree[attr_root] = {"attr": onclause, "alias": target}
             isouter = value.get("isouter", False)
             stmt = stmt.join(target, onclause, isouter=isouter)
@@ -527,15 +519,9 @@ class QueryBuilder:
             for name, item in value.get("order_by", {}).items():
                 direction = item["direction"]
                 column = getattr(target, name)
-                order_by.append(column.asc() if direction == 'asc' else column.desc())
+                order_by.append(column.asc() if direction == "asc" else column.desc())
             stmt = self._apply_joins_recursively(
-                stmt,
-                joins=value,
-                order_by=order_by,
-                where=where,
-                parent_model_cls=target,
-                tree=tree,
-                root=attr_root
+                stmt, joins=value, order_by=order_by, where=where, parent_model_cls=target, tree=tree, root=attr_root
             )
         return stmt
 

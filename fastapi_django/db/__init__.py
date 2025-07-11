@@ -4,7 +4,6 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from fastapi_django.conf import settings
 from fastapi_django.exceptions import ImproperlyConfigured
 
-
 # поддерживаемые диалекты SQLAlchemy https://docs.sqlalchemy.org/en/20/dialects/index.html
 # SQLAlchemy как безоговорочный вариант для взаимодействия с БД
 
@@ -27,7 +26,9 @@ class EngineProxy:
             database=settings.DATABASE["DATABASE"],
         )
         kw = settings.DATABASE.get("OPTIONS", {})
-        self.__dict__["_engine"] = create_async_engine(url, **kw)  # иначе будет RecursionError: maximum recursion depth exceeded
+        self.__dict__["_engine"] = create_async_engine(
+            url, **kw
+        )  # иначе будет RecursionError: maximum recursion depth exceeded
 
     def __getattr__(self, item):
         return getattr(self._engine, item)

@@ -1,6 +1,6 @@
 import logging
 from itertools import islice
-from typing import Generic, Any, Type, Self
+from typing import Any, Generic, Self
 
 from fastapi_django.db.repositories.queryset import QuerySet
 from fastapi_django.db.sessions import session_context_var
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class BaseRepository(Generic[Model]):
-    model_cls: Type[Model]
+    model_cls: type[Model]
 
     def __init__(self):
         if not self.model_cls:

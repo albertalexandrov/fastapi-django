@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
-from typing import Any, AsyncGenerator
+from typing import Any
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from fastapi_django.db import engine
 
@@ -11,10 +11,39 @@ session_factory = async_sessionmaker(bind=engine, expire_on_commit=False)
 session_context_var: ContextVar[Any] = ContextVar("sqlalchemy_session", default=None)
 
 
+async def get_session(autocommit: bool = False, **kw: Any):
+    """Возвращает кортеж из трех объектов для работы сессии.
+
+    :param autocommit: Признак "AUTOCOMMIT".
+    :return: Возвращает кортеж.
+    """
+    if autocommit:
+        connection = engine.execution_options(isolation_level="AUTOCOMMIT")
+        transaction = None
+    else:
+        connection = await engine.connect()
+        transaction = await connection.begin()
+
+    session = session_factory(bind=connection, **kw)
+    return connection, transaction, session
+
+
+async def set_session(autocommit: bool = False, **kw: Any):
+    """Метод устанавливает значения (соединение, транзакция, сессия) в контекст.
+
+    :param autocommit: Признак "AUTOCOMMIT".
+    :return: Возвращает кортеж.
+    """
+    connection, transaction, session = session_context_var.get()
+    if session is None:
+        connection, transaction, session = await get_session(autocommit=autocommit, kw=kw)
+        token = session_context_var.set((connection, transaction, session))
+    return connection, transaction, session, token
+
+
 @asynccontextmanager
 async def contextified_transactional_session(**kw: Any):
-    """
-    Управляет жизненным циклом сессии, присоединенной к внешней транзакции
+    """Управляет жизненным циклом сессии, присоединенной к внешней транзакции.
 
     Внешняя транзакция необходима для того, чтобы не зависет от возможных коммитов сессии
 
@@ -25,11 +54,7 @@ async def contextified_transactional_session(**kw: Any):
             stmt = select(MyModel)
             ....
     """
-    assert session_context_var.get() is None, "Сессия была создана ранее"  # TODO: точно нужно запрещать повторное использование?
-    connection = await engine.connect()
-    transaction = await connection.begin()
-    session = session_factory(bind=connection, **kw)
-    token = session_context_var.set(session)
+    connection, transaction, session, token = await set_session(kw=kw)
     try:
         yield session
         await transaction.commit()
@@ -44,8 +69,7 @@ async def contextified_transactional_session(**kw: Any):
 
 @asynccontextmanager
 async def contextified_autocommit_session(**kw: Any):
-    """
-    Управляет жизненным циклом сессии с уровнем изоляции AUTOCOMMIT
+    """Управляет жизненным циклом сессии с уровнем изоляции AUTOCOMMIT.
 
     AUTOCOMMIT может быть полезен как микрооптимизация (не генерить транзакций без необходимости - селекты)
 
@@ -56,10 +80,7 @@ async def contextified_autocommit_session(**kw: Any):
             stmt = select(MyModel)
             ....
     """
-    assert session_context_var.get() is None, "Сессия была создана ранее"  # TODO: точно нужно запрещать повторное использование?
-    autocommit_engine = engine.execution_options(isolation_level="AUTOCOMMIT")
-    session = session_factory(bind=autocommit_engine, **kw)
-    token = session_context_var.set(session)
+    _, _, session, token = await set_session(autocommit=True, kw=kw)
     yield session
     await session.close()
     session_context_var.reset(token)
