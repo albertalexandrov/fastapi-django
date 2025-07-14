@@ -2,9 +2,10 @@ from functools import partial
 from pathlib import Path
 
 import pkg_resources
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Depends
 from starlette.staticfiles import StaticFiles
 
+from fastapi_django.auth.authentication import auth
 from fastapi_django.conf import settings
 from fastapi_django.docs.views import router as docs_router
 
@@ -64,6 +65,7 @@ def get_default_app() -> FastAPI:
         docs_url=None,
         redoc_url=None,
         openapi_url=f"{settings.API_PREFIX}/docs/openapi.json",
+        dependencies=[Depends(auth)],
     )
     # TODO: настроить урлы
     app.include_router = partial(app.include_router, prefix=settings.API_PREFIX)  # type: ignore
