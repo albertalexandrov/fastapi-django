@@ -109,6 +109,7 @@ class UsrAdmAuth(SecurityBase):
             raise e
         if not user.is_active:
             raise HTTP401Exception
+        request.scope["user"] = user
         return user
 
     async def _get_public_key(self) -> RSAPublicKey:

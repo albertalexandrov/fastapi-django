@@ -7,7 +7,7 @@ check_untyped_defs = true
 
 [tool.poetry]
 name = "fastapi-django"
-version = "0.4.11"
+version = "0.5.7"
 description = ""
 authors = ["albertalexandrov <albert-ugatu@list.ru>"]
 packages = [{include = "fastapi_django"}]
