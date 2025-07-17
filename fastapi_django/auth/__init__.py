@@ -31,6 +31,7 @@ def AuthenicationClasses(*authenticators):
                 f"Значение {authenticator.__class__.__name__}.auto_error должно быть равно False, "
                 f"чтобы отработали все аутентификации"
             )
+    # пляска с сигнатурой функции wrapper необходима для того, чтобы FastAPI увидел authenticators как зависимости
     parameters = [
         Parameter("request", Parameter.POSITIONAL_OR_KEYWORD, annotation=Request),
     ]
