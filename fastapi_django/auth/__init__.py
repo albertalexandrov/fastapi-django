@@ -65,6 +65,8 @@ class BasicAuthentication(HTTPBasic):
     async def _authenticate(self, credentials: HTTPBasicCredentials | None) -> Any:
         # это может быть например получение сервисного пользователя из бд с последующим
         # сравнением кредов с сохраненными.  метод при этом возвращает экземпляр пользователя
+        # см. пример аутентификации сервисного пользователя, данные которого хранятся в БД:
+        #   https://github.com/albertalexandrov/fastapi-django-example/blob/main/src/web/auth.py
         raise NotImplementedError("Не реализована логика аутентификации")
 
 
