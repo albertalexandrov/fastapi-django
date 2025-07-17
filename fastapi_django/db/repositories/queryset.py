@@ -98,7 +98,7 @@ class QuerySet:
         clone._sliced = self._sliced
         return clone
 
-    def filter(self, **kw: dict[str, Any]) -> Self:
+    def filter(self, **kw: Any) -> Self:
         self._validate_sliced()
         clone = self._clone()
         clone._query_builder.filter(**kw)

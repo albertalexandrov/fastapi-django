@@ -1,13 +1,13 @@
-import re
 from base64 import b64decode
 
 import httpx
 import jwt
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.rsa import RSAPublicKey
-from fastapi.openapi.models import HTTPBearer
-from fastapi.security.base import SecurityBase
+from fastapi import HTTPException
+from fastapi.security.http import HTTPBearer
 from httpx import HTTPStatusError
+from jwt import PyJWTError
 from pydantic import BaseModel
 from starlette import status
 from starlette.requests import Request
@@ -59,7 +59,7 @@ class User(BaseModel):
         return result
 
 
-class UsrAdmAuth(SecurityBase):
+class UsrAdmAuth(HTTPBearer):
     """
     Аутентификация в сервисе User Administration
 
@@ -77,26 +77,46 @@ class UsrAdmAuth(SecurityBase):
     надежности (реализует SRP)
 
     """
-    def __init__(self):
-        self.model = HTTPBearer(description="Аутентификация в сервисе User Administration")
-        self.scheme_name = self.__class__.__name__
 
-    async def __call__(self, request: Request) -> User:
-        if (authorization := request.headers.get("Authorization")) is None:
+    def __init__(
+        self,
+        *,
+        bearerFormat: str | None = None,
+        scheme_name: str | None = None,
+        description: str | None = None,
+        auto_error: bool = True
+    ):
+        description = description or "Аутентификация в сервисе User Administration"
+        super().__init__(
+            bearerFormat=bearerFormat, scheme_name=scheme_name, description=description, auto_error=auto_error
+        )
+
+    async def __call__(self, request: Request) -> User | None:
+        try:
+            credentials = await super().__call__(request)
+        except HTTPException:
             raise HTTP401Exception
-        if (match := re.fullmatch('^[Bb]earer ((\\.?[A-Za-z0-9-_]+){3})$', authorization)) is None:
-            raise HTTP401Exception
-        token = match.group(1)
+        if credentials is None:
+            if self.auto_error:
+                raise HTTP401Exception
+            return
+        token = credentials.credentials
         try:
             header = jwt.get_unverified_header(token)
-        except jwt.exceptions.DecodeError:
-            raise HTTP401Exception
+        except PyJWTError:
+            if self.auto_error:
+                raise HTTP401Exception
+            return
         alg = header["alg"]
         public_key = await self._get_public_key()
         try:
-            data = jwt.decode(token, key=public_key, algorithms=[alg], options=dict(verify_exp=True, verify_aud=False))
-        except Exception:  # TODO: какая специфичная ошибка может быть?
-            raise HTTP401Exception
+            data = jwt.decode(
+                token, key=public_key, algorithms=[alg], options=dict(verify_exp=True, verify_aud=False)
+            )
+        except PyJWTError:
+            if self.auto_error:
+                raise HTTP401Exception
+            return
         try:
             user = await self._get_user(data["preferred_username"])
         except HTTPStatusError as e:
@@ -105,10 +125,14 @@ class UsrAdmAuth(SecurityBase):
                 # от сервиса User Administration пришел ответ с кодом 404.  если же, получив
                 # от сервиса, напр., код 500, и отдавая пользователю 401, можно легко быть
                 # сбитым с толку при отладке ошибок
-                raise HTTP401Exception
+                if self.auto_error:
+                    raise HTTP401Exception
+                return
             raise e
         if not user.is_active:
-            raise HTTP401Exception
+            if self.auto_error:
+                raise HTTP401Exception
+            return
         request.scope["user"] = user
         return user
 

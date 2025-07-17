@@ -46,16 +46,18 @@ from fastapi_django.permissions import BasePermission
 
 
 class CodenamePermission(BasePermission):  # TODO: название не очень, но ничего другого придумать не смог
+
     def __init__(self, codename: str):
         self._codename = codename
 
-    async def __call__(self, request: Request) -> bool:
+    async def _has_permission(self, request: Request) -> bool:
         return self._has_user_in_scope(request) and self._codename in request.user.permissions
 
 
 class RolePermission(BasePermission):
+
     def __init__(self, role_name: str):
         self._role_name = role_name
 
-    async def __call__(self, request: Request) -> bool:
+    async def _has_permission(self, request: Request) -> bool:
         return self._has_user_in_scope(request) and self._role_name in request.user.roles
