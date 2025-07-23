@@ -2,7 +2,7 @@ from functools import partial
 from pathlib import Path
 
 import pkg_resources
-from fastapi import APIRouter, FastAPI, Depends
+from fastapi import APIRouter, FastAPI
 from starlette.staticfiles import StaticFiles
 
 from fastapi_django.conf import settings
@@ -15,14 +15,12 @@ APP_ROOT = Path(__file__).parent
 
 
 def include_docs_router(app: FastAPI, router: APIRouter) -> None:
-    print("===> settings.API_DOCS_ENABLED", settings.API_DOCS_ENABLED)
     if settings.API_DOCS_ENABLED:
         app.mount(f"{settings.API_PREFIX}/static", StaticFiles(directory=APP_ROOT / "static"), name="static")
         router.include_router(docs_router)
 
 
 def setup_prometheus(app: FastAPI) -> None:
-    print("===> settings.PROMETHEUS_ENABLED", settings.PROMETHEUS_ENABLED)
     if settings.PROMETHEUS_ENABLED and "prometheus-fastapi-instrumentator" in installed_packages_list:
         from prometheus_fastapi_instrumentator import PrometheusFastApiInstrumentator
 
@@ -44,7 +42,6 @@ def include_routers(app: FastAPI) -> None:
 
 def setup_middlewares(app: FastAPI) -> None:
     for middleware in settings.MIDDLEWARES:
-        print("===> middleware", middleware)
         app.add_middleware(middleware)
     #  TODO: продумать:
     #  преднастроенные миддлварь, которые задаются в строковом формате и
