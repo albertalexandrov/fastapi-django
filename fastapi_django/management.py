@@ -10,6 +10,8 @@ def cli(argv=None) -> None:
     argv = argv[1:]
     command = argv[0]
     if command == "runserver":
+        # если запускать командой fastapi-django runserver, то будет ошибка при чтении settings,
+        # тк в PATH не будет пути до проекта, но если через manage.py, то путь будет добавлен
         # TODO: рассмотреть возможность других команд
         uvicorn.run(
             settings.UVICORN_APP,

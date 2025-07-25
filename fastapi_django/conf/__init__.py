@@ -9,16 +9,10 @@ empty = object()
 
 class LazySettings:
     def __init__(self):
-        # Note: if a subclass overrides __init__(), it will likely need to
-        # override __copy__() and __deepcopy__() as well.
         self._wrapped = empty
 
     def _setup(self, name=None):
-        """Load the settings module pointed to by the environment variable.
-
-        This is used the first time settings are needed, if the user hasn't
-        configured settings manually.
-        """
+        print(sys)
         settings_module = os.environ.get(ENVIRONMENT_VARIABLE, "settings")
         if not settings_module:
             raise ValueError("не сконфигурировано")
@@ -26,14 +20,10 @@ class LazySettings:
         self._wrapped = Settings(settings_module)
 
     def __getattr__(self, name):
-        """Return the value of a setting and cache it in self.__dict__."""
         if (_wrapped := self._wrapped) is empty:
             self._setup(name)
             _wrapped = self._wrapped
         val = getattr(_wrapped, name)
-
-        # Special case some settings which require further modification.
-        # This is done here for performance reasons so the modified value is cached.
         if name in {"MEDIA_URL", "STATIC_URL"} and val is not None:
             val = self._add_script_prefix(val)
         elif name == "SECRET_KEY" and not val:
@@ -43,11 +33,6 @@ class LazySettings:
         return val
 
     def __setattr__(self, name, value):
-        """Set the value of setting.
-
-        Clear all cached values if _wrapped changes
-        (@override_settings does this) or clear single values when set.
-        """
         if name == "_wrapped":
             self.__dict__.clear()
         else:
