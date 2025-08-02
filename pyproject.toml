@@ -7,7 +7,7 @@ check_untyped_defs = true
 
 [tool.poetry]
 name = "fastapi-django"
-version = "0.8.5"
+version = "0.8.28"
 description = ""
 authors = ["albertalexandrov <albert-ugatu@list.ru>"]
 packages = [{include = "fastapi_django"}]
@@ -37,10 +37,7 @@ pyjwt = "^2.10.1"
 httpx = "^0.28.1"
 cryptography = "^45.0.5"
 environs = "^14.2.0"
-cookiecutter = "^2.6.0"
-
-[tool.poetry.scripts]
-fastapi-django = "fastapi_django.management:cli"
+typer = "^0.16.0"
 
 [tool.poetry.group.dev.dependencies]
 bandit = "^1.7.9"

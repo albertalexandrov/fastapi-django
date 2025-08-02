@@ -12,7 +12,6 @@ class LazySettings:
         self._wrapped = empty
 
     def _setup(self, name=None):
-        print(sys)
         settings_module = os.environ.get(ENVIRONMENT_VARIABLE, "settings")
         if not settings_module:
             raise ValueError("не сконфигурировано")
@@ -48,6 +47,11 @@ class LazySettings:
     def configured(self):
         """Return True if the settings have already been configured."""
         return self._wrapped is not empty
+
+    def __dir__(self):
+        if self._wrapped is empty:
+            self._setup()
+        return dir(self._wrapped)
 
 
 class Settings:
