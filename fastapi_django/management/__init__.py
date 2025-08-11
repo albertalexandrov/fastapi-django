@@ -1,12 +1,11 @@
-from collections.abc import Callable
-
 from typer import Typer
+from fastapi_django.conf import settings
+from uvicorn.importer import import_from_string
 
-from fastapi_django.management.commands.echo import echo
-from fastapi_django.management.commands.runserver import runserver
+typer = Typer(rich_markup_mode="markdown")
+management = [{"typer": "fastapi_django.management.cli:typer"}] + settings.MANAGEMENT
 
-cli = Typer()
-commands: list[Callable] = [echo, runserver]
+for item in management:
+    typer.add_typer(import_from_string(item["typer"]), name=item.get("name"))
 
-for command in commands:
-    cli.command()(command)
+__all__ = ["typer"]

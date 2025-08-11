@@ -27,3 +27,5 @@ DATABASE: dict = {}
 #         # другие параметры, которые будут переданы как kw в функцию create_async_engine()
 #     }
 # }
+
+MANAGEMENT: list[dict] = []
