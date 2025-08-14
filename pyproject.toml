@@ -1,3 +1,6 @@
+[project]
+name = "fastapi-django"
+
 [tool.mypy]
 mypy_path = [
   "fastapi_django",
@@ -7,7 +10,7 @@ check_untyped_defs = true
 
 [tool.poetry]
 name = "fastapi-django"
-version = "0.9.12"
+version = "0.10.4"
 description = ""
 authors = ["albertalexandrov <albert-ugatu@list.ru>"]
 packages = [{include = "fastapi_django"}]
@@ -119,3 +122,6 @@ skip-magic-trailing-comma = false
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+
+[project.scripts]
+fastapi-django = "fastapi_django.test:main"

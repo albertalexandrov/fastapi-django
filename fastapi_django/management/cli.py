@@ -2,6 +2,7 @@ import uvicorn
 from typer import Typer
 
 from fastapi_django.conf import settings
+from fastapi_django.exceptions import ImproperlyConfigured
 
 typer = Typer(rich_markup_mode="markdown")
 
@@ -19,8 +20,12 @@ def runserver():
     uvicorn_settings = [setting for setting in dir(settings) if setting.startswith("UVICORN_")]
     for setting in uvicorn_settings:
         _, param = setting.split("_", 1)
-        params[param.lower()] = getattr(settings, setting)
-    uvicorn.run(**params)
+        if (param := param.lower()) == "log_config":
+            raise ImproperlyConfigured("Настройки логирования необходимо определять в настройке LOGGING")
+        params[param] = getattr(settings, setting)
+    # log_config необходимо выставить в None, чтобы не были применены дефолтные настройки,
+    # которые переопределят настройки из LOGGING. LOGGING - единое место для настроек логирования
+    uvicorn.run(**params, log_config=None)
 
 
 @typer.command()

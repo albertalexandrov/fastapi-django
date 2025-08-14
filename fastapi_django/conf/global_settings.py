@@ -1,3 +1,5 @@
+from typing import Any
+
 UVICORN_APP = "web.app:create_app"
 UVICORN_HOST = "localhost"
 UVICORN_PORT = 8000
@@ -29,3 +31,6 @@ DATABASE: dict = {}
 # }
 
 MANAGEMENT: list[dict] = []
+
+# Custom logging configuration.
+LOGGING: dict[str, Any] = {}
