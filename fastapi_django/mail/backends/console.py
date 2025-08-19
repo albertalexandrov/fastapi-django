@@ -1,0 +1,48 @@
+"""
+Email backend that writes messages to console instead of sending them.
+"""
+
+import sys
+import threading
+
+from fastapi_django.mail.backends.base import BaseEmailBackend
+
+
+class EmailBackend(BaseEmailBackend):
+    """
+    TODO: нужно что то в асинхронное переделывать?
+    """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.stream = kwargs.pop("stream", sys.stdout)
+        self._lock = threading.RLock()
+
+    def write_message(self, message):
+        msg = message.message()
+        msg_data = msg.as_bytes()
+        charset = (
+            msg.get_charset().get_output_charset() if msg.get_charset() else "utf-8"
+        )
+        msg_data = msg_data.decode(charset)
+        self.stream.write("%s\n" % msg_data)
+        self.stream.write("-" * 79)
+        self.stream.write("\n")
+
+    async def send_messages(self, email_messages):
+        """Write all messages to the stream in a thread-safe way."""
+        if not email_messages:
+            return
+        msg_count = 0
+        with self._lock:
+            try:
+                stream_created = await self.open()
+                for message in email_messages:
+                    self.write_message(message)
+                    self.stream.flush()  # flush after each message
+                    msg_count += 1
+                if stream_created:
+                    await self.close()
+            except Exception:
+                if not self.fail_silently:
+                    raise
+        return msg_count

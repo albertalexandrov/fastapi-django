@@ -32,5 +32,13 @@ DATABASE: dict = {}
 
 MANAGEMENT: list[dict] = []
 
-# Custom logging configuration.
 LOGGING: dict[str, Any] = {}
+
+EMAIL_PROVIDERS: dict[str, Any] = {}
+
+DEFAULT_CHARSET = "utf-8"
+
+# Whether to send SMTP 'Date' header in the local time zone or in UTC.
+EMAIL_USE_LOCALTIME = False
+
+DEFAULT_EMAIL_PROVIDER_ALIAS = "default"
