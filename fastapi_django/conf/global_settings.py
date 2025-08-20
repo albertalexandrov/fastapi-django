@@ -42,3 +42,8 @@ DEFAULT_CHARSET = "utf-8"
 EMAIL_USE_LOCALTIME = False
 
 DEFAULT_EMAIL_PROVIDER_ALIAS = "default"
+
+# рендеринг шаблонов
+
+TEMPLATES_DIRECTORY = "templates"
+TEMPLATES_ENV_OPTIONS: dict = {}
