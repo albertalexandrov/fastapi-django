@@ -1,9 +1,9 @@
 import uvicorn
+from IPython import embed
 from typer import Typer
 
 from fastapi_django.conf import settings
 from fastapi_django.exceptions import ImproperlyConfigured
-from fastapi_django.utils.logging import get_logging_config
 
 typer = Typer(rich_markup_mode="markdown")
 
@@ -24,7 +24,7 @@ def runserver():
         if (param := param.lower()) == "log_config":
             raise ImproperlyConfigured("Настройки логирования необходимо определять в настройке LOGGING")
         params[param] = getattr(settings, setting)
-    uvicorn.run(**params, log_config=get_logging_config())
+    uvicorn.run(**params, log_config=settings.LOGGING)
 
 
 @typer.command()
@@ -33,3 +33,11 @@ def echo(message: str):
     Эхо-команда
     """
     print(f"Echo: {message}")
+
+
+@typer.command()
+def shell() -> None:
+    """
+    Runs a Python interactive interpreter (iPython)
+    """
+    embed()

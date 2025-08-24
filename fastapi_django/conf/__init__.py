@@ -53,6 +53,14 @@ class LazySettings:
             self._setup()
         return dir(self._wrapped)
 
+    def extend(self, settings_module=None):
+        mod = importlib.import_module(settings_module)
+        for setting in dir(mod):
+            if setting.isupper() and not hasattr(self, setting):
+                value = getattr(mod, setting)
+                setattr(self, setting, value)
+        return self
+
 
 class Settings:
     def __init__(self, settings_module):
