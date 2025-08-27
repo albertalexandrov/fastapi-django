@@ -7,7 +7,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.security.base import SecurityBase
 from typing_extensions import Annotated
 
-from fastapi_django.exceptions.http import HTTP401Exception
+from fastapi_django.exceptions import HTTP401Exception
 
 
 def AuthenicationClasses(*authenticators):

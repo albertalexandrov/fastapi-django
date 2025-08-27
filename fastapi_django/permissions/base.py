@@ -1,6 +1,6 @@
 from starlette.requests import Request
 
-from fastapi_django.exceptions.http import HTTP403Exception
+from fastapi_django.exceptions import HTTP403Exception
 
 
 class BasePermission:

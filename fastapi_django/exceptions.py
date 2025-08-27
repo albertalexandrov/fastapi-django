@@ -1,5 +1,5 @@
-from fastapi import HTTPException, status
-
+from fastapi import HTTPException
+from starlette import status
 
 
 class HTTP401Exception(HTTPException):
@@ -20,3 +20,7 @@ class HTTP404Exception(HTTPException):
 class HTTP400Exception(HTTPException):
     def __init__(self, detail: str = "Bad request", headers: dict | None = None) -> None:
         super().__init__(status.HTTP_400_BAD_REQUEST, detail=detail, headers=headers)
+
+
+class ImproperlyConfigured(Exception):
+    pass
