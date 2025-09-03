@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from contextvars import ContextVar
-from typing import Any, AsyncGenerator
+from typing import Any
 
-from sqlalchemy.ext.asyncio import async_sessionmaker, AsyncSession
+from sqlalchemy.ext.asyncio import async_sessionmaker
 
 from fastapi_django.db import engine
 
@@ -32,6 +32,7 @@ async def contextified_transactional_session(**kw: Any):
     token = session_context_var.set(session)
     try:
         yield session
+        await session.flush()
         await transaction.commit()
     except Exception as e:
         await transaction.rollback()

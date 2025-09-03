@@ -16,12 +16,15 @@ class BaseRepository(Generic[Model]):
     def __init__(self):
         if not self.model_cls:
             raise ImproperlyConfigured(f"Не задана модель в атрибуте `{self.__class__.__name__}.model_cls`")
-        self._session = session_context_var.get()
-        assert self._session is not None, "Сессия не определена. Используйте декоратор"
-        print(self._session)
         self._flush = False
         self._commit = False
         print(f"Инициировали репозиторий {self.__class__.__name__}")
+
+    @property
+    def _session(self):
+        session = session_context_var.get()
+        assert session is not None, "Сессия не определена. Используйте декоратор"
+        return session
 
     def _clone(self) -> Self:
         clone = self.__class__()
